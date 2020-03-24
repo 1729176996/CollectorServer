@@ -24,7 +24,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 //设置静态文件路径,可以直接访问这个路径下的静态文件,比如http://127.0.0.1:8081/public/images/logo.png
 app.use('/public', express.static('public'));
 
-app.use(multer({ dest: '/tmp/'}).array('image'));
+app.use(multer({ dest: '/tmp/'}).array('file'));
 
 //数据库连接设置
 //为了能保存中文,数据库字符集和排序规则请分别设为utf-8和general ci
@@ -158,16 +158,23 @@ app.get('/login',function(req,res){
 })
 
 //上传文件
-app.post('/file_upload', function (req, res) {
+app.post('/save', function (req, res) {
+	// 输出 JSON 格式,设置response编码为utf-8,解决返回中文乱码问题
+	res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});
+	
+	var type = req.body.type;
+	console.log(type);
+	
 	console.log(req.files[0]);  // 上传的文件信息
 	var filename = req.files[0].originalname;
-	var des_file = __dirname + "/public/upload/" + filename;
+	var des_file = __dirname + "/public/" + filename;
 	fs.readFile( req.files[0].path, function (err, data) {
 		fs.writeFile(des_file, data, function (err) {
 			if( err ){
 				console.log( err );
 				res.redirect('https://1729176996.github.io/MyPixelBook/uploadFail.html');
 			}else{
+				
 				//创建新的数据库连接
 				//	当你在发出请求的时候执行connection.connect()，无论你在请求末尾是否使用了connection.end()，当你再次请求时，都会视为你进行了一次新的连接。
 				//	因此你需要执行创建新连接的操作
@@ -187,12 +194,24 @@ app.post('/file_upload', function (req, res) {
 					
 					if(err){
 						console.log( err );
-						res.redirect(url+'/public/uploadFail.html');
+						// 输出 JSON 格式
+						var obj = {
+							code:100,
+							msg:'上传失败',
+							data:err
+						};
+						res.end(JSON.stringify(obj));
 					}else{
-						res.redirect(url+'/public/uploadSuc.html');
+						// 输出 JSON 格式
+						var obj = {
+							code:200,
+							msg:'上传成功'
+						};
+						res.end(JSON.stringify(obj));
 					}
 					
 				});
+			
 			}
 		});
 	});
